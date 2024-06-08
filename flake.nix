@@ -80,7 +80,13 @@
 
               nvim :: String -> IO ()
               nvim theme = do
-                let colorsVimFile = "${inputs.base16-vim}" </> "colors" </> "base16-" <> theme <.> "vim"
+                copyFromNixStoreIntoHome
+                  ("${inputs.base16-vim}" </> "colors" </> "base16-" <> theme <.> "vim")
+                  ".config/nvim/colors.vim"
+                runInAllNvims "<esc>:source ~/.config/nvim/colors.vim<CR>"
+
+              runInAllNvims :: String -> IO ()
+              runInAllNvims command = do
                 xdgRuntimeDir <- getEnv "XDG_RUNTIME_DIR"
                 nvimSockets <- listDirectory xdgRuntimeDir
                   <&> filter (\ file -> "nvim." `isPrefixOf` file && ".0" `isSuffixOf` file)
@@ -91,7 +97,7 @@
                       "--server",
                       socket,
                       "--remote-send",
-                      "<esc>:source " <> colorsVimFile <> "<CR>"
+                      command
                     ]
 
               gtk :: String -> IO ()
