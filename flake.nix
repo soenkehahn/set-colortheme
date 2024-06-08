@@ -68,11 +68,14 @@
               import System.Directory
               import System.Environment
               import System.FilePath
+              import System.IO
               import WithCli
 
               main :: IO ()
               main = withCli $ \ (theme :: String) -> do
+                hPutStrLn stderr "gtk"
                 gtk theme
+                hPutStrLn stderr "nvim"
                 nvim theme
 
               nvim :: String -> IO ()
