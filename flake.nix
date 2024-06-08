@@ -124,7 +124,9 @@
                 isFile <- doesFileExist source
                 case (isDir, isFile) of
                   (True, False) -> do
-                    removeDirectoryRecursive destination
+                    destinationExists <- doesDirectoryExist destination
+                    when destinationExists $ do
+                      removeDirectoryRecursive destination
                     createDirectoryIfMissing True $ destination </> ".."
                     run_ $ cmd "cp"
                       & addArgs [ "-r", source, destination ]
