@@ -19,6 +19,10 @@
       url = "github:tinted-theming/base16-vim";
       flake = false;
     };
+    schemes = {
+      url = "github:tinted-theming/schemes";
+      flake = false;
+    };
   };
   outputs = inputs:
     inputs.flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
@@ -50,6 +54,7 @@
                 -Wall -Werror \
                 -Wno-name-shadowing \
                 -XViewPatterns \
+                -XLambdaCase \
                 ${pkgs.writeText "Main.hs" text} \
                 -o ${name}
               mkdir -p $out/bin
@@ -72,11 +77,18 @@
               import WithCli
 
               main :: IO ()
-              main = withCli $ \ (theme :: String) -> do
-                hPutStrLn stderr "gtk"
-                gtk theme
-                hPutStrLn stderr "nvim"
-                nvim theme
+              main = withCli $ \case
+                "list" -> do
+                  themes <- listDirectory "${inputs.schemes}/base16"
+                    <&> filter (\ f -> takeExtension f == ".yaml")
+                    <&> map takeBaseName
+                    <&> sort
+                  putStr $ unlines themes
+                theme -> do
+                  hPutStrLn stderr "gtk"
+                  gtk theme
+                  hPutStrLn stderr "nvim"
+                  nvim theme
 
               nvim :: String -> IO ()
               nvim theme = do
