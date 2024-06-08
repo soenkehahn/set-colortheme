@@ -1,5 +1,6 @@
 {
   inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     cradle = {
       url = "github:garnix-io/cradle";
@@ -14,18 +15,21 @@
       url = "github:tinted-theming/base16-gtk-flatcolor";
       flake = false;
     };
+    base16-vim = {
+      url = "github:tinted-theming/base16-vim";
+      flake = false;
+    };
   };
-  outputs = { self, nixpkgs, flake-utils, cradle, FlatColor, base16-gtk-flatcolor }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
+  outputs = inputs:
+    inputs.flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = inputs.nixpkgs.legacyPackages.${system};
         lib = pkgs.lib;
-
         haskellScript =
           let
             haskellPackages = pkgs.haskellPackages.override {
               overrides = final: prev: {
-                cradle = (cradle.lib.${system}.mkCradle final);
+                cradle = (inputs.cradle.lib.${system}.mkCradle final);
               };
             };
           in
@@ -57,7 +61,10 @@
           default = haskellScript {
             name = "set-colortheme-new";
             text = ''
+              import Control.Monad
               import Cradle
+              import Data.Functor
+              import Data.List
               import System.Directory
               import System.Environment
               import System.FilePath
@@ -65,6 +72,27 @@
 
               main :: IO ()
               main = withCli $ \ (theme :: String) -> do
+                gtk theme
+                nvim theme
+
+              nvim :: String -> IO ()
+              nvim theme = do
+                let colorsVimFile = "${inputs.base16-vim}" </> "colors" </> "base16-" <> theme <.> "vim"
+                xdgRuntimeDir <- getEnv "XDG_RUNTIME_DIR"
+                nvimSockets <- listDirectory xdgRuntimeDir
+                  <&> filter (\ file -> "nvim." `isPrefixOf` file && ".0" `isSuffixOf` file)
+                  <&> map (xdgRuntimeDir </>)
+                forM_ nvimSockets $ \ socket -> do
+                  run_ $ cmd "nvim"
+                    & addArgs [
+                      "--server",
+                      socket,
+                      "--remote-send",
+                      "<esc>:source " <> colorsVimFile <> "<CR>"
+                    ]
+
+              gtk :: String -> IO ()
+              gtk theme = do
                 createColorTheme theme "set-colortheme-temporary"
                 switchToColorTheme "set-colortheme-temporary"
                 createColorTheme theme "set-colortheme"
@@ -73,10 +101,10 @@
               createColorTheme :: String -> String -> IO ()
               createColorTheme base16Theme name = do
                 copyFromNixStoreIntoHome
-                  ("${FlatColor}" </> "gtk-3.20")
+                  ("${inputs.FlatColor}" </> "gtk-3.20")
                   (".themes" </> name)
                 copyFromNixStoreIntoHome
-                  ("${base16-gtk-flatcolor}" </> "gtk-3" </> "base16-" <> base16Theme <> "-gtk.css")
+                  ("${inputs.base16-gtk-flatcolor}" </> "gtk-3" </> "base16-" <> base16Theme <> "-gtk.css")
                   (".themes" </> name </> "gtk-3.20" </> "colors.css")
 
               switchToColorTheme :: String -> IO ()
@@ -100,11 +128,15 @@
                     run_ $ cmd "chmod"
                       & addArgs [ "u+w", "-R", destination ]
                   (False, True) -> do
-                    removeFile destination
+                    destinationExists <- doesFileExist destination
+                    when destinationExists $ do
+                      removeFile destination
                     run_ $ cmd "cp"
                       & addArgs [ source, destination ]
                     run_ $ cmd "chmod"
                       & addArgs [ "u+w", destination ]
+                  (False, False) -> do
+                    error $ "file not found: " <> source
                   _ -> error "impossible"
             '';
           };
