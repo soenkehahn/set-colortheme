@@ -3,7 +3,7 @@
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     cradle = {
-      url = "github:garnix-io/cradle";
+      url = "github:garnix-io/cradle/sh/stdin-string";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
@@ -91,8 +91,9 @@
 
               main :: IO ()
               main = withCli $ \case
-                "list" -> list
-                theme -> switch theme
+                Just "list" -> putStr =<< list
+                Nothing -> interactiveSwitch
+                Just theme -> switch theme
 
               data Colortheme = Colortheme {
                 palette :: Map Text (RGB Word8)
@@ -104,7 +105,7 @@
                 parseJSON = withText "RGB Word8" $ \ text ->
                   return $ toSRGB24 $ sRGB24read @Double $ cs text
 
-              list :: IO ()
+              list :: IO String
               list = do
                 let baseDir = "${inputs.schemes}/base16"
                 themeFiles <- listDirectory baseDir
@@ -123,7 +124,16 @@
                               (map show [channelRed value, channelGreen value, channelBlue value])
                             <> "m  \ESC[m"
                       in colors <> " " <> takeBaseName themeFile
-                putStr $ unlines lines
+                return $ unlines lines
+
+              interactiveSwitch :: IO ()
+              interactiveSwitch = do
+                l <- list
+                StdoutTrimmed selected <- run $ cmd "fzf"
+                  & addArgs ["--ansi"]
+                  & setStdin (cs l)
+                run_ $ cmd "set-colortheme"
+                  & addArgs [selected]
 
               switch :: String -> IO ()
               switch theme = do
