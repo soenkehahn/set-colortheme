@@ -42,9 +42,11 @@
             {
               buildInputs = [
                 (haskellPackages.ghc.withPackages (p: [
+                  p.colour
                   p.cradle
                   p.getopt-generics
                   p.temporary
+                  p.yaml
                 ]))
               ];
               meta.mainProgram = name;
@@ -53,8 +55,10 @@
               ghc -threaded \
                 -Wall -Werror \
                 -Wno-name-shadowing \
-                -XViewPatterns \
+                -XDeriveAnyClass \
+                -XDerivingStrategies \
                 -XLambdaCase \
+                -XViewPatterns \
                 ${pkgs.writeText "Main.hs" text} \
                 -o ${name}
               mkdir -p $out/bin
@@ -66,10 +70,19 @@
           default = haskellScript {
             name = "set-colortheme-new";
             text = ''
+              {-# OPTIONS_GHC -fno-warn-orphans #-}
+
               import Control.Monad
               import Cradle
+              import Data.Colour.SRGB
               import Data.Functor
               import Data.List
+              import Data.Map (Map, toAscList)
+              import Data.String.Conversions
+              import Data.Text (Text)
+              import Data.Word
+              import Data.Yaml
+              import qualified Data.ByteString
               import System.Directory
               import System.Environment
               import System.FilePath
@@ -78,17 +91,46 @@
 
               main :: IO ()
               main = withCli $ \case
-                "list" -> do
-                  themes <- listDirectory "${inputs.schemes}/base16"
-                    <&> filter (\ f -> takeExtension f == ".yaml")
-                    <&> map takeBaseName
-                    <&> sort
-                  putStr $ unlines themes
-                theme -> do
-                  hPutStrLn stderr "gtk"
-                  gtk theme
-                  hPutStrLn stderr "nvim"
-                  nvim theme
+                "list" -> list
+                theme -> switch theme
+
+              data Colortheme = Colortheme {
+                palette :: Map Text (RGB Word8)
+              }
+                deriving stock (Show, Generic)
+                deriving anyclass (FromJSON)
+
+              instance FromJSON (RGB Word8) where
+                parseJSON = withText "RGB Word8" $ \ text ->
+                  return $ toSRGB24 $ sRGB24read @Double $ cs text
+
+              list :: IO ()
+              list = do
+                let baseDir = "${inputs.schemes}/base16"
+                themeFiles <- listDirectory baseDir
+                  <&> filter (\ f -> takeExtension f == ".yaml")
+                  <&> map (baseDir </>)
+                  <&> sort
+                lines <- forM themeFiles $ \ themeFile -> do
+                  yaml <- Data.ByteString.readFile themeFile
+                  return $ case decodeEither' @Colortheme yaml of
+                    Left err -> error $ "cannot parse " <> themeFile <> ": " <> show err
+                    Right (Colortheme palette) ->
+                      let colors = concat $ flip map (toAscList palette) $ \(_name, value) ->
+                            "\ESC[48;2;"
+                            <> intercalate
+                              ";"
+                              (map show [channelRed value, channelGreen value, channelBlue value])
+                            <> "m  \ESC[m"
+                      in colors <> " " <> takeBaseName themeFile
+                putStr $ unlines lines
+
+              switch :: String -> IO ()
+              switch theme = do
+                hPutStrLn stderr "gtk"
+                gtk theme
+                hPutStrLn stderr "nvim"
+                nvim theme
 
               nvim :: String -> IO ()
               nvim theme = do
