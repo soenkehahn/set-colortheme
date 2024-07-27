@@ -7,6 +7,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
+    schemes = {
+      url = "github:tinted-theming/schemes";
+      flake = false;
+    };
     FlatColor = {
       url = "github:soenkehahn/FlatColor/sh";
       flake = false;
@@ -19,8 +23,8 @@
       url = "github:tinted-theming/base16-vim";
       flake = false;
     };
-    schemes = {
-      url = "github:tinted-theming/schemes";
+    base16-i3 = {
+      url = "github:tinted-theming/base16-i3";
       flake = false;
     };
   };
@@ -131,49 +135,63 @@
                 gtk theme
                 hPutStrLn stderr "nvim"
                 nvim theme
+                hPutStrLn stderr "sway"
+                sway theme
 
               nvim :: String -> IO ()
               nvim theme = do
-                copyFromNixStoreIntoHome
-                  ("${inputs.base16-vim}" </> "colors" </> "base16-" <> theme <.> "vim")
-                  ".config/nvim/colors.vim"
-                runInAllNvims "<esc>:source ~/.config/nvim/colors.vim<CR>"
-
-              runInAllNvims :: String -> IO ()
-              runInAllNvims command = do
-                xdgRuntimeDir <- getEnv "XDG_RUNTIME_DIR"
-                nvimSockets <- listDirectory xdgRuntimeDir
-                  <&> filter (\ file -> "nvim." `isPrefixOf` file && ".0" `isSuffixOf` file)
-                  <&> map (xdgRuntimeDir </>)
-                forM_ nvimSockets $ \ socket -> do
-                  run_ $ cmd "nvim"
-                    & addArgs [
-                      "--server",
-                      socket,
-                      "--remote-send",
-                      command
-                    ]
+                  copyFromNixStoreIntoHome
+                    ("${inputs.base16-vim}" </> "colors" </> "base16-" <> theme <.> "vim")
+                    ".config/nvim/colors.vim"
+                  runInAllNvims "<esc>:source ~/.config/nvim/colors.vim<CR>"
+                where
+                  runInAllNvims :: String -> IO ()
+                  runInAllNvims command = do
+                    xdgRuntimeDir <- getEnv "XDG_RUNTIME_DIR"
+                    nvimSockets <- listDirectory xdgRuntimeDir
+                      <&> filter (\ file -> "nvim." `isPrefixOf` file && ".0" `isSuffixOf` file)
+                      <&> map (xdgRuntimeDir </>)
+                    forM_ nvimSockets $ \ socket -> do
+                      run_ $ cmd "nvim"
+                        & addArgs [
+                          "--server",
+                          socket,
+                          "--remote-send",
+                          command
+                        ]
 
               gtk :: String -> IO ()
               gtk theme = do
-                createColorTheme theme "set-colortheme-temporary"
-                switchToColorTheme "set-colortheme-temporary"
-                createColorTheme theme "set-colortheme"
-                switchToColorTheme "set-colortheme"
+                  createColorTheme theme "set-colortheme-temporary"
+                  switchToColorTheme "set-colortheme-temporary"
+                  createColorTheme theme "set-colortheme"
+                  switchToColorTheme "set-colortheme"
+                where
+                  createColorTheme :: String -> String -> IO ()
+                  createColorTheme base16Theme name = do
+                    copyFromNixStoreIntoHome
+                      ("${inputs.FlatColor}" </> "gtk-3.20")
+                      (".themes" </> name)
+                    copyFromNixStoreIntoHome
+                      ("${inputs.base16-gtk-flatcolor}" </> "gtk-3" </> "base16-" <> base16Theme <> "-gtk.css")
+                      (".themes" </> name </> "gtk-3.20" </> "colors.css")
 
-              createColorTheme :: String -> String -> IO ()
-              createColorTheme base16Theme name = do
-                copyFromNixStoreIntoHome
-                  ("${inputs.FlatColor}" </> "gtk-3.20")
-                  (".themes" </> name)
-                copyFromNixStoreIntoHome
-                  ("${inputs.base16-gtk-flatcolor}" </> "gtk-3" </> "base16-" <> base16Theme <> "-gtk.css")
-                  (".themes" </> name </> "gtk-3.20" </> "colors.css")
+                  switchToColorTheme :: String -> IO ()
+                  switchToColorTheme name = do
+                    run_ $ cmd "gsettings"
+                      & addArgs [ "set", "org.gnome.desktop.interface", "gtk-theme", name]
 
-              switchToColorTheme :: String -> IO ()
-              switchToColorTheme name = do
-                run_ $ cmd "gsettings"
-                  & addArgs [ "set", "org.gnome.desktop.interface", "gtk-theme", name]
+              sway :: String -> IO ()
+              sway theme = do
+                copyFromNixStoreIntoHome
+                  ("${inputs.base16-i3}/colors/base16-" <> theme <.> "config")
+                  ".config/sway/colors"
+                run_ $ cmd "swaymsg"
+                  & addArgs ["reload"]
+                  & silenceStdout
+                run_ $ cmd "swaymsg"
+                  & addArgs ["output * background $base00 solid_color"]
+                  & silenceStdout
 
               copyFromNixStoreIntoHome :: FilePath -> FilePath -> IO ()
               copyFromNixStoreIntoHome source destination = do
