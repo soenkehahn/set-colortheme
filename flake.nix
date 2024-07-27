@@ -154,11 +154,12 @@
                     forM_ nvimSockets $ \ socket -> do
                       run_ $ cmd "nvim"
                         & addArgs [
-                          "--server",
-                          socket,
-                          "--remote-send",
-                          command
-                        ]
+                            "--server",
+                            socket,
+                            "--remote-send",
+                            command
+                          ]
+                        & silenceStdout
 
               gtk :: String -> IO ()
               gtk theme = do
