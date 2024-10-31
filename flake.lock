@@ -17,6 +17,22 @@
         "type": "github"
       }
     },
+    "base16-alacritty": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1727574278,
+        "narHash": "sha256-Z2z7bFOBPauNEMFEA/5F6kdahTTypMt9JFTQ7yZkY6Y=",
+        "owner": "tinted-theming",
+        "repo": "base16-alacritty",
+        "rev": "97cd85d428adb491c6f6cf8b96663b1b4fd98561",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tinted-theming",
+        "repo": "base16-alacritty",
+        "type": "github"
+      }
+    },
     "base16-gtk-flatcolor": {
       "flake": false,
       "locked": {
@@ -124,6 +140,7 @@
     "root": {
       "inputs": {
         "FlatColor": "FlatColor",
+        "base16-alacritty": "base16-alacritty",
         "base16-gtk-flatcolor": "base16-gtk-flatcolor",
         "base16-i3": "base16-i3",
         "base16-vim": "base16-vim",

@@ -15,16 +15,20 @@
       url = "github:soenkehahn/FlatColor/sh";
       flake = false;
     };
+    base16-alacritty = {
+      url = "github:tinted-theming/base16-alacritty";
+      flake = false;
+    };
     base16-gtk-flatcolor = {
       url = "github:tinted-theming/base16-gtk-flatcolor";
       flake = false;
     };
-    base16-vim = {
-      url = "github:tinted-theming/base16-vim";
-      flake = false;
-    };
     base16-i3 = {
       url = "github:tinted-theming/base16-i3";
+      flake = false;
+    };
+    base16-vim = {
+      url = "github:tinted-theming/base16-vim";
       flake = false;
     };
   };
@@ -137,6 +141,8 @@
                 nvim theme
                 hPutStrLn stderr "sway"
                 sway theme
+                hPutStrLn stderr "alacritty"
+                alacritty theme
 
               nvim :: String -> IO ()
               nvim theme = do
@@ -193,6 +199,12 @@
                 run_ $ cmd "swaymsg"
                   & addArgs ["output * background $base00 solid_color"]
                   & silenceStdout
+
+              alacritty :: String -> IO ()
+              alacritty theme = do
+                copyFromNixStoreIntoHome
+                  ("${inputs.base16-alacritty}/colors/base16-" <> theme <.> "toml")
+                  ".config/alacritty/colors.toml"
 
               copyFromNixStoreIntoHome :: FilePath -> FilePath -> IO ()
               copyFromNixStoreIntoHome source destination = do
