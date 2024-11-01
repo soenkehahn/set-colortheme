@@ -53,6 +53,8 @@
                   p.colour
                   p.cradle
                   p.getopt-generics
+                  p.interpolate
+                  p.lens
                   p.temporary
                   p.yaml
                 ]))
@@ -61,11 +63,14 @@
             }
             ''
               ghc -threaded \
-                -Wall -Werror \
+                -Wall \
+                -Werror \
                 -Wno-name-shadowing \
+                -Wno-incomplete-uni-patterns \
                 -XDeriveAnyClass \
                 -XDerivingStrategies \
                 -XLambdaCase \
+                -XQuasiQuotes \
                 -XViewPatterns \
                 ${pkgs.writeText "Main.hs" text} \
                 -o ${name}
@@ -80,17 +85,23 @@
             text = ''
               {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+              import Control.Arrow
+              import Control.Lens hiding ((<.>))
               import Control.Monad
               import Cradle
               import Data.Colour.SRGB
-              import Data.Functor
               import Data.List
-              import Data.Map (Map, toAscList)
+              import Data.Map.Strict (Map, toAscList, (!))
+              import qualified Data.Map.Strict as Map
+              import Data.Maybe
               import Data.String.Conversions
+              import Data.String.Interpolate
+              import Data.String.Interpolate.Util
               import Data.Text (Text)
               import Data.Word
               import Data.Yaml
               import qualified Data.ByteString
+              import Numeric.Lens
               import System.Directory
               import System.Environment
               import System.FilePath
@@ -135,14 +146,18 @@
 
               switch :: String -> IO ()
               switch theme = do
-                hPutStrLn stderr "gtk"
-                gtk theme
-                hPutStrLn stderr "nvim"
-                nvim theme
-                hPutStrLn stderr "sway"
-                sway theme
-                hPutStrLn stderr "alacritty"
-                alacritty theme
+                forM_ switchers $ \ (name, switcher) -> do
+                  hPutStrLn stderr name
+                  switcher theme
+
+              switchers :: [(String, String -> IO ())]
+              switchers =
+                ("alacritty", alacritty) :
+                ("gtk", gtk) :
+                ("i3status", i3status) :
+                ("nvim", nvim) :
+                ("sway", sway) :
+                []
 
               nvim :: String -> IO ()
               nvim theme = do
@@ -205,6 +220,67 @@
                 copyFromNixStoreIntoHome
                   ("${inputs.base16-alacritty}/colors/base16-" <> theme <.> "toml")
                   ".config/alacritty/colors.toml"
+
+              i3status :: String -> IO ()
+              i3status theme = do
+                colors <- readFile ("${inputs.base16-i3}/colors/base16-" <> theme <.> "config")
+                  <&> lines
+                  <&> mapMaybe (stripPrefix "set $base")
+                  <&> map (
+                    words >>>
+                    (\[a, b] -> (a, b)) >>>
+                    first (^?! hex @Int)
+                  )
+                  <&> Map.fromList
+                let foreground = colors ! 13
+                    error = colors ! 8
+                    -- background = colors ! 0
+                    config = unindent [i|
+                      general {
+                        colors = true
+                        color_good = '#{foreground}'
+                        color_degraded = '#{error}'
+                        color_bad = '#{error}'
+                        interval = 5
+                      }
+
+                      order += 'memory'
+                      order += 'cpu_usage'
+                      order += 'wireless _first_'
+                      order += 'battery all'
+                      order += 'tztime local'
+
+                      wireless _first_ {
+                        format_up = 'W: %ip'
+                        format_down = 'W: down'
+                      }
+
+                      battery all {
+                        format = '%status %percentage'
+                        low_threshold = 10
+                        threshold_type = 'percentage'
+                      }
+
+                      tztime local {
+                        format = '%Y-%m-%d %H:%M'
+                      }
+
+                      cpu_usage {
+                        format = 'cpu: %usage'
+                      }
+
+                      disk '/' {
+                        format = '%avail'
+                      }
+
+                      memory {
+                        format = 'Free RAM: %available'
+                        threshold_degraded = 10%
+                        threshold_critical = 5%
+                      }
+                    |]
+                home <- getEnv "HOME"
+                writeFile (home </> ".config/i3status/config") config
 
               copyFromNixStoreIntoHome :: FilePath -> FilePath -> IO ()
               copyFromNixStoreIntoHome source destination = do
