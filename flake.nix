@@ -216,12 +216,32 @@
                 copyFromNixStoreIntoHome
                   ("${inputs.base16-i3}/colors/base16-" <> theme <.> "config")
                   ".config/sway/colors"
-                run_ $ cmd "swaymsg"
-                  & addArgs ["reload"]
-                  & silenceStdout
-                run_ $ cmd "swaymsg"
-                  & addArgs ["output * background $base00 solid_color"]
-                  & silenceStdout
+                colors <- getHexColors theme
+                let commands = [i|
+                        output * background #{colors ! 0} solid_color
+
+                        # class                 border         bground       text           indicator      child_border
+                        client.focused          #{colors ! 8}  #{colors ! 0} #{colors ! 8}  #{colors ! 12} #{colors ! 0}
+                        client.unfocused        #{colors ! 13} #{colors ! 0} #{colors ! 13} #{colors ! 0}  #{colors ! 0}
+                        client.focused_inactive #{colors ! 13} #{colors ! 0} #{colors ! 8}  #{colors ! 0}  #{colors ! 0}
+                        client.urgent           #{colors ! 8}  #{colors ! 8} #{colors ! 0}
+
+                        bar bar-0 colors background #{colors ! 0}
+                        bar bar-0 colors statusline #{colors ! 13}
+                        bar bar-0 colors separator #{colors ! 13}
+                        bar bar-0 colors focused_workspace #{colors ! 8} #{colors ! 0} #{colors ! 8}
+                        bar bar-0 colors inactive_workspace #{colors ! 13} #{colors ! 0} #{colors ! 13}
+                        bar bar-0 colors active_workspace #{colors ! 13} #{colors ! 0} #{colors ! 8}
+                        bar bar-0 colors urgent_workspace #{colors ! 8} #{colors ! 8} #{colors ! 0}
+                      |]
+                      & unindent
+                      & lines
+                      & filter (/= "")
+                      & filter (\ line -> not ("#" `isPrefixOf` line))
+                forM_ (commands) $ \ command -> do
+                  run_ $ cmd "swaymsg"
+                    & addArgs [command]
+                    & silenceStdout
 
               alacritty :: String -> IO ()
               alacritty theme = do
@@ -231,7 +251,7 @@
 
               i3status :: String -> IO ()
               i3status theme = do
-                colors <- getI3Colors theme
+                colors <- getHexColors theme
                 let foreground = colors ! 13
                     error = colors ! 8
                     config = unindent [i|
@@ -283,7 +303,7 @@
 
               swaylock :: String -> IO ()
               swaylock theme = do
-                colors <- getI3Colors theme
+                colors <- getHexColors theme
                 let foreground = colors ! 13
                     error = colors ! 8
                     background = colors ! 0
@@ -316,8 +336,8 @@
                 home <- getEnv "HOME"
                 writeFile (home </> ".config/swaylock/config") config
 
-              getI3Colors :: String -> IO (Map Int String)
-              getI3Colors theme = do
+              getHexColors :: String -> IO (Map Int String)
+              getHexColors theme = do
                 readFile ("${inputs.base16-i3}/colors/base16-" <> theme <.> "config")
                   <&> lines
                   <&> mapMaybe (stripPrefix "set $base")
