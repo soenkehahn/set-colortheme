@@ -85,7 +85,7 @@
       rec {
         packages = {
           default = haskellScript {
-            name = "set-colortheme-new";
+            name = "set-colortheme";
             text = ''
               {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -366,7 +366,7 @@
           };
         };
         apps = {
-          set-colortheme-new = {
+          set-colortheme = {
             type = "app";
             program = builtins.toString (lib.getExe packages.default);
           };
