@@ -161,6 +161,7 @@
                 ("i3status", i3status) :
                 ("nvim", nvim) :
                 ("rofi", rofi) :
+                ("swaylock", swaylock) :
                 ("sway", sway) :
                 []
 
@@ -228,18 +229,9 @@
 
               i3status :: String -> IO ()
               i3status theme = do
-                colors <- readFile ("${inputs.base16-i3}/colors/base16-" <> theme <.> "config")
-                  <&> lines
-                  <&> mapMaybe (stripPrefix "set $base")
-                  <&> map (
-                    words >>>
-                    (\[a, b] -> (a, b)) >>>
-                    first (^?! hex @Int)
-                  )
-                  <&> Map.fromList
+                colors <- getI3Colors theme
                 let foreground = colors ! 13
                     error = colors ! 8
-                    -- background = colors ! 0
                     config = unindent [i|
                       general {
                         colors = true
@@ -286,6 +278,53 @@
                     |]
                 home <- getEnv "HOME"
                 writeFile (home </> ".config/i3status/config") config
+
+              swaylock :: String -> IO ()
+              swaylock theme = do
+                colors <- getI3Colors theme
+                let foreground = colors ! 13
+                    error = colors ! 8
+                    background = colors ! 0
+                    config = unindent [i|
+                      indicator-radius=100
+                      indicator-thickness=40
+
+                      color=#{background}
+                      ring-color=00000000
+                      inside-color=00000000
+                      line-color=00000000
+                      separator-color=00000000
+                      key-hl-color=#{foreground}
+
+                      inside-ver-color=00000000
+                      ring-ver-color=#{foreground}
+                      line-ver-color=00000000
+                      text-ver-color=#{foreground}
+
+                      inside-clear-color=00000000
+                      ring-clear-color=#{foreground}
+                      line-clear-color=00000000
+                      text-clear-color=#{foreground}
+
+                      inside-wrong-color=00000000
+                      ring-wrong-color=#{error}
+                      line-wrong-color=00000000
+                      text-wrong-color=#{error}
+                    |]
+                home <- getEnv "HOME"
+                writeFile (home </> ".config/swaylock/config") config
+
+              getI3Colors :: String -> IO (Map Int String)
+              getI3Colors theme = do
+                readFile ("${inputs.base16-i3}/colors/base16-" <> theme <.> "config")
+                  <&> lines
+                  <&> mapMaybe (stripPrefix "set $base")
+                  <&> map (
+                    words >>>
+                    (\[a, b] -> (a, b)) >>>
+                    first (^?! hex @Int)
+                  )
+                  <&> Map.fromList
 
               rofi :: String -> IO ()
               rofi theme = do
