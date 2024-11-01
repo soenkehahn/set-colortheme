@@ -153,6 +153,8 @@
                 forM_ switchers $ \ (name, switcher) -> do
                   hPutStrLn stderr name
                   switcher theme
+                run_ $ cmd "notify-send"
+                  & addArgs ["colortheme: " <> theme]
 
               switchers :: [(String, String -> IO ())]
               switchers =
