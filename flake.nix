@@ -27,6 +27,10 @@
       url = "github:tinted-theming/base16-i3";
       flake = false;
     };
+    base16-rofi = {
+      url = "github:tinted-theming/base16-rofi";
+      flake = false;
+    };
     base16-vim = {
       url = "github:tinted-theming/base16-vim";
       flake = false;
@@ -156,6 +160,7 @@
                 ("gtk", gtk) :
                 ("i3status", i3status) :
                 ("nvim", nvim) :
+                ("rofi", rofi) :
                 ("sway", sway) :
                 []
 
@@ -281,6 +286,12 @@
                     |]
                 home <- getEnv "HOME"
                 writeFile (home </> ".config/i3status/config") config
+
+              rofi :: String -> IO ()
+              rofi theme = do
+                copyFromNixStoreIntoHome
+                  ("${inputs.base16-rofi}/colors/base16-" <> theme <.> "rasi")
+                  ".config/rofi/colors.rasi"
 
               copyFromNixStoreIntoHome :: FilePath -> FilePath -> IO ()
               copyFromNixStoreIntoHome source destination = do

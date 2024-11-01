@@ -65,6 +65,22 @@
         "type": "github"
       }
     },
+    "base16-rofi": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1725756568,
+        "narHash": "sha256-TvydMwm3iwrtn136e3w7cTsopcAfG5BhBcn+jzfeBXw=",
+        "owner": "tinted-theming",
+        "repo": "base16-rofi",
+        "rev": "3a1ddc189c6cfd966c49b2c2d04cbaca7bb72a99",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tinted-theming",
+        "repo": "base16-rofi",
+        "type": "github"
+      }
+    },
     "base16-vim": {
       "flake": false,
       "locked": {
@@ -143,6 +159,7 @@
         "base16-alacritty": "base16-alacritty",
         "base16-gtk-flatcolor": "base16-gtk-flatcolor",
         "base16-i3": "base16-i3",
+        "base16-rofi": "base16-rofi",
         "base16-vim": "base16-vim",
         "cradle": "cradle",
         "flake-utils": "flake-utils",
