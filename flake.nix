@@ -35,6 +35,10 @@
       url = "github:tinted-theming/base16-vim";
       flake = false;
     };
+    base16-helix = {
+      url = "github:tinted-theming/base16-helix";
+      flake = false;
+    };
   };
   outputs = inputs:
     inputs.flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
@@ -160,6 +164,7 @@
               switchers =
                 ("alacritty", alacritty) :
                 ("gtk", gtk) :
+                ("helix", helix) :
                 ("i3status", i3status) :
                 ("nvim", nvim) :
                 ("rofi", rofi) :
@@ -189,6 +194,15 @@
                             command
                           ]
                         & silenceStdout
+
+              helix :: String -> IO ()
+              helix theme = do
+                copyFromNixStoreIntoHome
+                  ("${inputs.base16-helix}" </> "themes" </> "base16-" <> theme <.> "toml")
+                  ".config/helix/themes/mine.toml"
+                _ :: ExitCode <- run $ cmd "pkill" &
+                  addArgs ["--signal", "SIGUSR1", "^hx$"]
+                pure ()
 
               gtk :: String -> IO ()
               gtk theme = do

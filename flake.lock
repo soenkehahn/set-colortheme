@@ -33,6 +33,22 @@
         "type": "github"
       }
     },
+    "base16-helix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1752979451,
+        "narHash": "sha256-0CQM+FkYy0fOO/sMGhOoNL80ftsAzYCg9VhIrodqusM=",
+        "owner": "tinted-theming",
+        "repo": "base16-helix",
+        "rev": "27cf1e66e50abc622fb76a3019012dc07c678fac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tinted-theming",
+        "repo": "base16-helix",
+        "type": "github"
+      }
+    },
     "base16-i3": {
       "flake": false,
       "locked": {
@@ -141,6 +157,7 @@
       "inputs": {
         "FlatColor": "FlatColor",
         "base16-gtk-flatcolor": "base16-gtk-flatcolor",
+        "base16-helix": "base16-helix",
         "base16-i3": "base16-i3",
         "base16-rofi": "base16-rofi",
         "base16-vim": "base16-vim",
