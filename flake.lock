@@ -3,16 +3,15 @@
     "FlatColor": {
       "flake": false,
       "locked": {
-        "lastModified": 1717811859,
-        "narHash": "sha256-AQk06ttE/M5kSMdNAtBGknBnJtfjDUFVGhySJv4JEVE=",
+        "lastModified": 1717814357,
+        "narHash": "sha256-GGxXtVszVGR8Ows8K9+0FpQ/kjXHsEy2maEqgOVKCwc=",
         "owner": "soenkehahn",
         "repo": "FlatColor",
-        "rev": "5ae753f2a573f1f61780903a6b0d9493f61ec90c",
+        "rev": "e7663abab18fc159f1306b0fd9862333c503a326",
         "type": "github"
       },
       "original": {
         "owner": "soenkehahn",
-        "ref": "sh",
         "repo": "FlatColor",
         "type": "github"
       }

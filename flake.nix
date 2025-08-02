@@ -12,7 +12,7 @@
       flake = false;
     };
     FlatColor = {
-      url = "github:soenkehahn/FlatColor/sh";
+      url = "github:soenkehahn/FlatColor";
       flake = false;
     };
     tinted-terminal = {
