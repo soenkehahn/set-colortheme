@@ -155,7 +155,7 @@
               switch :: String -> IO ()
               switch theme = do
                 forM_ switchers $ \ (name, switcher) -> do
-                  hPutStrLn stderr name
+                  hPutStrLn stderr $ "changing theme in " <> name
                   switcher theme
                 run_ $ cmd "notify-send"
                   & addArgs ["colortheme: " <> theme]
