@@ -15,8 +15,8 @@
       url = "github:soenkehahn/FlatColor/sh";
       flake = false;
     };
-    base16-alacritty = {
-      url = "github:tinted-theming/base16-alacritty";
+    tinted-terminal = {
+      url = "github:tinted-theming/tinted-terminal";
       flake = false;
     };
     base16-gtk-flatcolor = {
@@ -246,7 +246,7 @@
               alacritty :: String -> IO ()
               alacritty theme = do
                 copyFromNixStoreIntoHome
-                  ("${inputs.base16-alacritty}/colors/base16-" <> theme <.> "toml")
+                  ("${inputs.tinted-terminal}/themes/alacritty/base16-" <> theme <.> "toml")
                   ".config/alacritty/colors.toml"
 
               i3status :: String -> IO ()

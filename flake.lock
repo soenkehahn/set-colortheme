@@ -17,22 +17,6 @@
         "type": "github"
       }
     },
-    "base16-alacritty": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1727574278,
-        "narHash": "sha256-Z2z7bFOBPauNEMFEA/5F6kdahTTypMt9JFTQ7yZkY6Y=",
-        "owner": "tinted-theming",
-        "repo": "base16-alacritty",
-        "rev": "97cd85d428adb491c6f6cf8b96663b1b4fd98561",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tinted-theming",
-        "repo": "base16-alacritty",
-        "type": "github"
-      }
-    },
     "base16-gtk-flatcolor": {
       "flake": false,
       "locked": {
@@ -156,7 +140,6 @@
     "root": {
       "inputs": {
         "FlatColor": "FlatColor",
-        "base16-alacritty": "base16-alacritty",
         "base16-gtk-flatcolor": "base16-gtk-flatcolor",
         "base16-i3": "base16-i3",
         "base16-rofi": "base16-rofi",
@@ -164,7 +147,8 @@
         "cradle": "cradle",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
-        "schemes": "schemes"
+        "schemes": "schemes",
+        "tinted-terminal": "tinted-terminal"
       }
     },
     "schemes": {
@@ -195,6 +179,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "tinted-terminal": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1753057963,
+        "narHash": "sha256-+4sEQN0jJzVYjPuW+1Gh9ccf7c/RD0amckdVd5QNpUI=",
+        "owner": "tinted-theming",
+        "repo": "tinted-terminal",
+        "rev": "99053fb01c9087daaf97ae9b1fb797b8fc6e6608",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tinted-theming",
+        "repo": "tinted-terminal",
         "type": "github"
       }
     }
