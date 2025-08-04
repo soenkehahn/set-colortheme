@@ -11,16 +11,8 @@
       url = "github:tinted-theming/schemes";
       flake = false;
     };
-    FlatColor = {
-      url = "github:soenkehahn/FlatColor";
-      flake = false;
-    };
     tinted-terminal = {
       url = "github:tinted-theming/tinted-terminal";
-      flake = false;
-    };
-    base16-gtk-flatcolor = {
-      url = "github:tinted-theming/base16-gtk-flatcolor";
       flake = false;
     };
     base16-i3 = {
@@ -122,6 +114,7 @@
                 theme -> switch theme
 
               data Colortheme = Colortheme {
+                variant :: Text,
                 palette :: Map Text (RGB Word8)
               }
                 deriving stock (Show, Generic)
@@ -134,23 +127,28 @@
               list :: IO ()
               list = do
                 let baseDir = "${inputs.schemes}/base16"
-                themeFiles <- listDirectory baseDir
+                themes <- listDirectory baseDir
                   <&> filter (\ f -> takeExtension f == ".yaml")
-                  <&> map (baseDir </>)
+                  <&> map takeBaseName
                   <&> sort
-                lines <- forM themeFiles $ \ themeFile -> do
-                  yaml <- Data.ByteString.readFile themeFile
-                  return $ case decodeEither' @Colortheme yaml of
-                    Left err -> error $ "cannot parse " <> themeFile <> ": " <> show err
-                    Right (Colortheme palette) ->
-                      let colors = concat $ flip map (toAscList palette) $ \(_name, value) ->
-                            "\ESC[48;2;"
-                            <> intercalate
-                              ";"
-                              (map show [channelRed value, channelGreen value, channelBlue value])
-                            <> "m  \ESC[m"
-                      in colors <> " " <> takeBaseName themeFile
+                lines <- forM themes $ \ theme -> do
+                  Colortheme _variant palette <- getColortheme theme
+                  let colors = concat $ flip map (toAscList palette) $ \(_name, value) ->
+                        "\ESC[48;2;"
+                        <> intercalate
+                          ";"
+                          (map show [channelRed value, channelGreen value, channelBlue value])
+                        <> "m  \ESC[m"
+                  return $ colors <> " " <> theme
                 putStr $ unlines lines
+
+              getColortheme :: String -> IO Colortheme
+              getColortheme theme = do
+                let themeFile = "${inputs.schemes}/base16" </> theme <.> "yaml"
+                yaml <- Data.ByteString.readFile themeFile
+                case decodeEither' @Colortheme yaml of
+                  Left err -> error $ "cannot parse " <> themeFile <> ": " <> show err
+                  Right theme -> return theme
 
               switch :: String -> IO ()
               switch theme = do
@@ -206,24 +204,9 @@
 
               gtk :: String -> IO ()
               gtk theme = do
-                  createColorTheme theme "set-colortheme-temporary"
-                  switchToColorTheme "set-colortheme-temporary"
-                  createColorTheme theme "set-colortheme"
-                  switchToColorTheme "set-colortheme"
-                where
-                  createColorTheme :: String -> String -> IO ()
-                  createColorTheme base16Theme name = do
-                    copyFromNixStoreIntoHome
-                      ("${inputs.FlatColor}" </> "gtk-3.20")
-                      (".themes" </> name)
-                    copyFromNixStoreIntoHome
-                      ("${inputs.base16-gtk-flatcolor}" </> "gtk-3" </> "base16-" <> base16Theme <> "-gtk.css")
-                      (".themes" </> name </> "gtk-3.20" </> "colors.css")
-
-                  switchToColorTheme :: String -> IO ()
-                  switchToColorTheme name = do
-                    run_ $ cmd "gsettings"
-                      & addArgs [ "set", "org.gnome.desktop.interface", "gtk-theme", name]
+                  variant <- variant <$> getColortheme theme
+                  run_ $ cmd "gsettings"
+                    & addArgs [ "set", "org.gnome.desktop.interface", "color-scheme", "prefer-" <> cs variant]
 
               sway :: String -> IO ()
               sway theme = do
