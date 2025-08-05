@@ -369,6 +369,7 @@
                     run_ $ cmd "chmod"
                       & addArgs [ "u+w", "-R", destination ]
                   (False, True) -> do
+                    createDirectoryIfMissing True (takeDirectory destination)
                     destinationExists <- doesFileExist destination
                     when destinationExists $ do
                       removeFile destination
