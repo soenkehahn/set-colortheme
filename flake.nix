@@ -31,6 +31,10 @@
       url = "github:tinted-theming/base16-helix";
       flake = false;
     };
+    base16-quickshell = {
+      url = "github:soenkehahn/base16-quickshell";
+      flake = false;
+    };
   };
   outputs = inputs:
     inputs.flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
@@ -168,7 +172,14 @@
                 ("rofi", rofi) :
                 ("swaylock", swaylock) :
                 ("sway", sway) :
+                ("quickshell", quickshell) :
                 []
+
+              quickshell :: String -> IO ()
+              quickshell theme = do
+                copyFromNixStoreIntoHome
+                  ("${inputs.base16-quickshell}" </> "quickshell" </> "base16-" <> theme </> "Colors.qml")
+                  ".config/quickshell/lib/Colors.qml"
 
               nvim :: String -> IO ()
               nvim theme = do
