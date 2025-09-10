@@ -229,7 +229,7 @@
                         output * background #{colors ! 0} solid_color
 
                         # class                 border         bground       text           indicator      child_border
-                        client.focused          #{colors ! 8}  #{colors ! 0} #{colors ! 8}  #{colors ! 12} #{colors ! 0}
+                        client.focused          #{colors ! 8}  #{colors ! 0} #{colors ! 8}  #{colors ! 0}  #{colors ! 0}
                         client.unfocused        #{colors ! 13} #{colors ! 0} #{colors ! 13} #{colors ! 0}  #{colors ! 0}
                         client.focused_inactive #{colors ! 13} #{colors ! 0} #{colors ! 8}  #{colors ! 0}  #{colors ! 0}
                         client.urgent           #{colors ! 8}  #{colors ! 8} #{colors ! 0}
