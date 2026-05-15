@@ -110,7 +110,192 @@ switchers =
     : ("sway", sway)
     : ("quickshell", quickshell)
     : ("jjui", jjui)
+    : ("zellij", zellij)
     : []
+
+zellij :: String -> IO ()
+zellij theme = do
+  Colortheme _variant palette <- getColortheme theme
+  let rgb :: String -> String
+      rgb name = let c = palette ! (cs name :: Text)
+                 in show (channelRed c) <> " " <> show (channelGreen c) <> " " <> show (channelBlue c)
+      bg = rgb "base00"
+      fg = rgb "base05"
+      bgAlt = rgb "base01"
+      focused = rgb "base05"
+      unfocused = rgb "base0D"
+      orange = rgb "base09"
+      yellow = rgb "base0A"
+      green = rgb "base0B"
+      cyan = rgb "base0C"
+      magenta = rgb "base0E"
+      config = unindent [i|
+        themes {
+          default {
+            // text in unselected panes
+            text_unselected {
+              base #{fg}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{green}
+              emphasis_3 #{magenta}
+            }
+            // text in selected panes
+            text_selected {
+              base #{fg}
+              background #{bgAlt}
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{green}
+              emphasis_3 #{magenta}
+            }
+            // active tab in the tab bar
+            ribbon_selected {
+              base #{focused}
+              background #{bg}
+              emphasis_0 #{unfocused}
+              emphasis_1 #{orange}
+              emphasis_2 #{magenta}
+              emphasis_3 #{green}
+            }
+            // inactive tabs in the tab bar
+            ribbon_unselected {
+              base #{unfocused}
+              background #{bg}
+              emphasis_0 #{focused}
+              emphasis_1 #{unfocused}
+              emphasis_2 #{magenta}
+              emphasis_3 #{green}
+            }
+            // header row in tables (e.g. session manager)
+            table_title {
+              base #{focused}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{green}
+              emphasis_3 #{magenta}
+            }
+            // highlighted row in tables
+            table_cell_selected {
+              base #{fg}
+              background #{bgAlt}
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{green}
+              emphasis_3 #{magenta}
+            }
+            // non-highlighted rows in tables
+            table_cell_unselected {
+              base #{fg}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{green}
+              emphasis_3 #{magenta}
+            }
+            // highlighted item in lists
+            list_selected {
+              base #{fg}
+              background #{bgAlt}
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{green}
+              emphasis_3 #{magenta}
+            }
+            // non-highlighted items in lists
+            list_unselected {
+              base #{fg}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{green}
+              emphasis_3 #{magenta}
+            }
+            // thin separator lines for the focused pane (pane_frames false)
+            border_selected {
+              base #{focused}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{magenta}
+              emphasis_3 0
+            }
+            // thin separator lines for unfocused panes (pane_frames false)
+            border_unselected {
+              base #{unfocused}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{magenta}
+              emphasis_3 0
+            }
+            // pane frame for the focused pane (pane_frames true)
+            frame_selected {
+              base #{focused}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{magenta}
+              emphasis_3 0
+            }
+            // pane frames for unfocused panes (pane_frames true)
+            frame_unselected {
+              base #{unfocused}
+              background 0
+              emphasis_0 #{orange}
+              emphasis_1 #{cyan}
+              emphasis_2 #{magenta}
+              emphasis_3 0
+            }
+            // pane frame when selecting a pane to move/resize
+            frame_highlight {
+              base #{orange}
+              background 0
+              emphasis_0 #{magenta}
+              emphasis_1 #{orange}
+              emphasis_2 #{orange}
+              emphasis_3 #{orange}
+            }
+            // exit code indicator when command succeeds
+            exit_code_success {
+              base #{green}
+              background 0
+              emphasis_0 #{cyan}
+              emphasis_1 #{bg}
+              emphasis_2 #{magenta}
+              emphasis_3 #{focused}
+            }
+            // exit code indicator when command fails
+            exit_code_error {
+              base #{focused}
+              background 0
+              emphasis_0 #{yellow}
+              emphasis_1 0
+              emphasis_2 0
+              emphasis_3 0
+            }
+            // cursor colors for different users in multiplayer sessions
+            multiplayer_user_colors {
+              player_1 #{magenta}
+              player_2 #{focused}
+              player_3 #{cyan}
+              player_4 #{yellow}
+              player_5 #{green}
+              player_6 #{orange}
+              player_7 #{unfocused}
+              player_8 0
+              player_9 0
+              player_10 0
+            }
+          }
+        }
+      |]
+  home <- getEnv "HOME"
+  let dest = home </> ".config/zellij/themes/default.kdl"
+  createDirectoryIfMissing True (takeDirectory dest)
+  writeFile dest config
 
 jjui :: String -> IO ()
 jjui theme = do
