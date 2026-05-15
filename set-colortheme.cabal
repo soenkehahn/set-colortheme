@@ -1,0 +1,38 @@
+cabal-version: 2.4
+name: set-colortheme
+version: 0.1.0.0
+
+executable set-colortheme
+  hs-source-dirs: src
+  main-is: Main.hs
+  ghc-options:
+    -threaded
+    -Wall
+    -Werror
+    -Wno-name-shadowing
+    -Wno-incomplete-uni-patterns
+  default-extensions:
+    DeriveAnyClass
+    DeriveGeneric
+    DerivingStrategies
+    FlexibleInstances
+    LambdaCase
+    QuasiQuotes
+    ScopedTypeVariables
+    TypeApplications
+    ViewPatterns
+  build-depends:
+    base,
+    bytestring,
+    colour,
+    containers,
+    cradle,
+    directory,
+    filepath,
+    getopt-generics,
+    interpolate,
+    lens,
+    string-conversions,
+    text,
+    yaml
+  default-language: Haskell2010
