@@ -35,6 +35,10 @@
       url = "github:soenkehahn/base16-quickshell";
       flake = false;
     };
+    base16-jjui = {
+      url = "github:vic/tinted-jjui";
+      flake = false;
+    };
   };
   outputs = inputs:
     inputs.flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
@@ -47,19 +51,22 @@
           };
         };
         themeInputs = removeAttrs inputs [ "self" "nixpkgs" "flake-utils" "cradle" ];
-        toEnvName = name: builtins.replaceStrings ["-"] ["_"] name;
-        themeInputEnvVars = lib.mapAttrs' (name: path:
-          lib.nameValuePair (toEnvName name) path
-        ) themeInputs;
+        toEnvName = name: builtins.replaceStrings [ "-" ] [ "_" ] name;
+        themeInputEnvVars = lib.mapAttrs'
+          (name: path:
+            lib.nameValuePair (toEnvName name) path
+          )
+          themeInputs;
         wrapperArgs = lib.concatStringsSep " "
           (lib.mapAttrsToList (name: path: ''--set ${name} "${path}"'') themeInputEnvVars);
         shellExports = lib.concatStringsSep "\n"
           (lib.mapAttrsToList (name: path: ''export ${name}="${path}"'') themeInputEnvVars);
-        set-colortheme-unwrapped = haskellPackages.callCabal2nix "set-colortheme" ./. {};
-        set-colortheme = pkgs.runCommand "set-colortheme" {
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-          meta.mainProgram = "set-colortheme";
-        } ''
+        set-colortheme-unwrapped = haskellPackages.callCabal2nix "set-colortheme" ./. { };
+        set-colortheme = pkgs.runCommand "set-colortheme"
+          {
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            meta.mainProgram = "set-colortheme";
+          } ''
           mkdir -p $out/bin
           makeWrapper ${lib.getExe set-colortheme-unwrapped} $out/bin/set-colortheme \
             ${wrapperArgs}

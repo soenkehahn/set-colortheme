@@ -32,6 +32,22 @@
         "type": "github"
       }
     },
+    "base16-jjui": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777860481,
+        "narHash": "sha256-pVBVOj2Td+RQDI8MkRbeR4H/EXYYbRXkJZBM8KiC7tE=",
+        "owner": "vic",
+        "repo": "tinted-jjui",
+        "rev": "8a71af48a44dd14983d470b048df8c68c4114a9b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vic",
+        "repo": "tinted-jjui",
+        "type": "github"
+      }
+    },
     "base16-quickshell": {
       "flake": false,
       "locked": {
@@ -140,6 +156,7 @@
       "inputs": {
         "base16-helix": "base16-helix",
         "base16-i3": "base16-i3",
+        "base16-jjui": "base16-jjui",
         "base16-quickshell": "base16-quickshell",
         "base16-rofi": "base16-rofi",
         "base16-vim": "base16-vim",

@@ -109,7 +109,15 @@ switchers =
     : ("swaylock", swaylock)
     : ("sway", sway)
     : ("quickshell", quickshell)
+    : ("jjui", jjui)
     : []
+
+jjui :: String -> IO ()
+jjui theme = do
+  base16Jjui <- getInputPath "base16_jjui"
+  copyFromNixStoreIntoHome
+    (base16Jjui </> "themes" </> "base16-" <> theme <.> "toml")
+    ".config/jjui/themes/main.toml"
 
 quickshell :: String -> IO ()
 quickshell theme = do
