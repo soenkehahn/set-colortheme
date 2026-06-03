@@ -30,6 +30,7 @@ import System.Exit (exitWith)
 import System.FilePath
 import System.IO
 import System.IO.Unsafe qualified
+import Text.Read (readMaybe)
 import WithCli
 
 main :: IO ()
@@ -48,6 +49,18 @@ flakeInput = System.IO.Unsafe.unsafePerformIO $ do
     Nothing -> throwIO $ ErrorCall "NIX_FLAKE_INPUTS not set!"
     Just flakeInputs -> do
       return flakeInputs
+
+data Os = Linux | Darwin
+  deriving (Read, Eq)
+
+os :: Os
+os = System.IO.Unsafe.unsafePerformIO $ do
+  StdoutTrimmed (cs -> os) <- run $ cmd "uname"
+  case readMaybe os of
+    Nothing -> throwIO $ ErrorCall $ "cannot parse uname output: " <> os
+    Just os -> return os
+
+-- * list
 
 data Colortheme = Colortheme
   { variant :: Text,
@@ -97,26 +110,31 @@ switch theme = do
         hPutStrLn stderr $ name <> ": " <> displayException e
         return $ Just e
       Right () -> return Nothing
-  run_ $
-    cmd "notify-send"
-      & addArgs ["colortheme: " <> theme]
+  when (os == Linux) $ do
+    run_ $
+      cmd "notify-send"
+        & addArgs ["colortheme: " <> theme]
   return $ case errors of
     [] -> Right ()
     _ -> Left ()
 
 switchers :: [(String, String -> IO ())]
 switchers =
-  ("alacritty", alacritty)
-    : ("gtk", gtk)
-    : ("helix", helix)
-    : ("i3status", i3status)
-    : ("nvim", nvim)
-    : ("rofi", rofi)
-    : ("swaylock", swaylock)
-    : ("sway", sway)
-    : ("quickshell", quickshell)
-    : ("zellij", zellij)
-    : []
+  [ ("alacritty", alacritty),
+    ("helix", helix),
+    ("zellij", zellij)
+  ]
+    <> case os of
+      Darwin -> []
+      Linux ->
+        [ ("gtk", gtk),
+          ("i3status", i3status),
+          ("nvim", nvim),
+          ("rofi", rofi),
+          ("swaylock", swaylock),
+          ("sway", sway),
+          ("quickshell", quickshell)
+        ]
 
 zellij :: String -> IO ()
 zellij theme = do
@@ -205,7 +223,7 @@ helix theme = do
   _ :: ExitCode <-
     run $
       cmd "pkill"
-        & addArgs ["--signal", "SIGUSR1", "^hx$"]
+        & addArgs ["-SIGUSR1", "^hx$"]
   pure ()
 
 gtk :: String -> IO ()
@@ -254,6 +272,8 @@ alacritty theme = do
   copyFromNixStoreIntoHome
     (flakeInput </> "tinted-terminal" </> "themes/alacritty/base16-" <> theme <.> "toml")
     ".config/alacritty/colors.toml"
+  home <- getEnv "HOME"
+  run $ cmd "touch" & addArgs [(home </> ".config/alacritty/alacritty.toml")]
 
 i3status :: String -> IO ()
 i3status theme = do
