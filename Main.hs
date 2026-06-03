@@ -2,11 +2,12 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 import Control.Arrow
-import Control.Exception (ErrorCall (..), throwIO)
+import Control.Exception (ErrorCall (..), SomeException, displayException, throwIO, try)
 import Control.Lens hiding ((<.>))
 import Control.Monad
 import Cradle
@@ -25,6 +26,7 @@ import Data.Yaml
 import Numeric.Lens
 import System.Directory
 import System.Environment
+import System.Exit (exitWith)
 import System.FilePath
 import System.IO
 import System.IO.Unsafe qualified
@@ -33,7 +35,11 @@ import WithCli
 main :: IO ()
 main = withCli $ \case
   "list" -> list
-  theme -> switch theme
+  theme -> do
+    result <- switch theme
+    case result of
+      Right () -> return ()
+      Left () -> exitWith (ExitFailure 1)
 
 flakeInput :: String
 flakeInput = System.IO.Unsafe.unsafePerformIO $ do
@@ -81,14 +87,22 @@ getColortheme theme = do
     Left err -> error $ "cannot parse " <> themeFile <> ": " <> show err
     Right theme -> return theme
 
-switch :: String -> IO ()
+switch :: String -> IO (Either () ())
 switch theme = do
-  forM_ switchers $ \(name, switcher) -> do
-    hPutStrLn stderr $ "changing theme in " <> name
-    switcher theme
+  errors <- fmap catMaybes $ forM switchers $ \(name, switcher) -> do
+    hPutStrLn stderr $ "\ESC[1mchanging theme in " <> name <> "\ESC[m"
+    result <- try $ switcher theme
+    case result of
+      Left (e :: SomeException) -> do
+        hPutStrLn stderr $ name <> ": " <> displayException e
+        return $ Just e
+      Right () -> return Nothing
   run_ $
     cmd "notify-send"
       & addArgs ["colortheme: " <> theme]
+  return $ case errors of
+    [] -> Right ()
+    _ -> Left ()
 
 switchers :: [(String, String -> IO ())]
 switchers =
