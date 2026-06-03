@@ -115,7 +115,56 @@ switchers =
     : ("swaylock", swaylock)
     : ("sway", sway)
     : ("quickshell", quickshell)
+    : ("zellij", zellij)
     : []
+
+zellij :: String -> IO ()
+zellij theme = do
+  colors <- getHexColors theme
+  let config =
+        unindent
+          [i|
+            themes {
+                mine {
+                    ribbon_selected {
+                        base "#{colors ! 8}"
+                        background "#{colors ! 2}"
+                        emphasis_0 "#{colors ! 14}"
+                        emphasis_1 "#{colors ! 15}"
+                        emphasis_2 "#{colors ! 12}"
+                        emphasis_3 "#{colors ! 13}"
+                    }
+                    ribbon_unselected {
+                        base "#{colors ! 13}"
+                        background "#{colors ! 2}"
+                        emphasis_0 "#{colors ! 14}"
+                        emphasis_1 "#{colors ! 15}"
+                        emphasis_2 "#{colors ! 12}"
+                        emphasis_3 "#{colors ! 13}"
+                    }
+                    text_selected {
+                        base "#{colors ! 8}"
+                        background "#{colors ! 0}"
+                        emphasis_0 "#{colors ! 14}"
+                        emphasis_1 "#{colors ! 15}"
+                        emphasis_2 "#{colors ! 12}"
+                        emphasis_3 "#{colors ! 13}"
+                    }
+                    text_unselected {
+                        base "#{colors ! 13}"
+                        background "#{colors ! 0}"
+                        emphasis_0 "#{colors ! 14}"
+                        emphasis_1 "#{colors ! 15}"
+                        emphasis_2 "#{colors ! 12}"
+                        emphasis_3 "#{colors ! 13}"
+                    }
+                }
+            }
+          |]
+  home <- getEnv "HOME"
+  createDirectoryIfMissing True (home </> ".config/zellij/themes")
+  writeFile (home </> ".config/zellij/themes/mine.kdl") config
+  run $ cmd "touch" & addArgs [(home </> ".config/zellij/config.kdl")]
 
 quickshell :: String -> IO ()
 quickshell theme = do
