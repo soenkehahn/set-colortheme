@@ -14,6 +14,7 @@ import Cradle
 import Data.ByteString qualified
 import Data.Colour.SRGB
 import Data.List
+import Data.Map qualified
 import Data.Map.Strict (Map, toAscList, (!))
 import Data.Map.Strict qualified as Map
 import Data.Maybe
@@ -139,50 +140,63 @@ switchers =
 zellij :: String -> IO ()
 zellij theme = do
   colors <- getHexColors theme
-  let config =
+  let defaults :: Map String String
+      defaults =
+        "base" ~> colors ! 8
+          <> "background" ~> colors ! 0
+          <> "emphasis_0" ~> colors ! 9
+          <> "emphasis_1" ~> colors ! 10
+          <> "emphasis_2" ~> colors ! 11
+          <> "emphasis_3" ~> colors ! 12
+      section :: String -> Map String String -> String
+      section title map =
+        unlines
+          ( [title <> " {"]
+              <> fmap
+                (\(k, v) -> k <> " " <> show v)
+                (Data.Map.toList (map <> defaults))
+              <> ["}"]
+          )
+      config =
         unindent
           [i|
             themes {
-                mine {
-                    ribbon_selected {
-                        base "#{colors ! 8}"
-                        background "#{colors ! 2}"
-                        emphasis_0 "#{colors ! 14}"
-                        emphasis_1 "#{colors ! 15}"
-                        emphasis_2 "#{colors ! 12}"
-                        emphasis_3 "#{colors ! 13}"
-                    }
-                    ribbon_unselected {
-                        base "#{colors ! 13}"
-                        background "#{colors ! 2}"
-                        emphasis_0 "#{colors ! 14}"
-                        emphasis_1 "#{colors ! 15}"
-                        emphasis_2 "#{colors ! 12}"
-                        emphasis_3 "#{colors ! 13}"
-                    }
-                    text_selected {
-                        base "#{colors ! 8}"
-                        background "#{colors ! 0}"
-                        emphasis_0 "#{colors ! 14}"
-                        emphasis_1 "#{colors ! 15}"
-                        emphasis_2 "#{colors ! 12}"
-                        emphasis_3 "#{colors ! 13}"
-                    }
-                    text_unselected {
-                        base "#{colors ! 13}"
-                        background "#{colors ! 0}"
-                        emphasis_0 "#{colors ! 14}"
-                        emphasis_1 "#{colors ! 15}"
-                        emphasis_2 "#{colors ! 12}"
-                        emphasis_3 "#{colors ! 13}"
-                    }
-                }
+              mine {
+                #{section "ribbon_selected" (
+                  "base" ~> colors ! 8 <>
+                  "background" ~> colors ! 2
+                )}
+                #{section "ribbon_unselected" (
+                  "base" ~> colors ! 13 <>
+                  "background" ~> colors ! 2
+                )}
+                #{section "text_selected" (
+                  "base" ~> colors ! 8
+                )}
+                #{section "text_unselected" (
+                  "base" ~> colors ! 13
+                )}
+                #{section "frame_selected" (
+                  "base" ~> colors ! 8
+                )}
+                #{section "frame_unselected" (
+                  "base" ~> colors ! 13
+                )}
+                #{section "frame_highlight" (
+                  "base" ~> colors ! 13
+                )}
+              }
             }
           |]
   home <- getEnv "HOME"
   createDirectoryIfMissing True (home </> ".config/zellij/themes")
   writeFile (home </> ".config/zellij/themes/mine.kdl") config
   run $ cmd "touch" & addArgs [(home </> ".config/zellij/config.kdl")]
+
+infix 8 ~>
+
+(~>) :: key -> value -> Map key value
+(~>) = Data.Map.singleton
 
 quickshell :: String -> IO ()
 quickshell theme = do
