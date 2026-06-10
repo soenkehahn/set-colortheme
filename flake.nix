@@ -106,6 +106,17 @@
             type = "app";
             program = lib.getExe set-colortheme;
           };
+          dev = {
+            type = "app";
+            program = lib.getExe (pkgs.writeShellApplication {
+              name = "dev";
+              runtimeInputs = [ ghc ];
+              text = ''
+                export FLAKE_INPUTS=${flakeInputs}
+                exec runhaskell ./Main.hs "$@"
+              '';
+            });
+          };
         };
         devShells.default = pkgs.mkShell {
           buildInputs = [

@@ -46,7 +46,7 @@ flakeInput :: String
 flakeInput = System.IO.Unsafe.unsafePerformIO $ do
   flakeInputs <- lookupEnv "FLAKE_INPUTS"
   case flakeInputs of
-    Nothing -> throwIO $ ErrorCall "NIX_FLAKE_INPUTS not set!"
+    Nothing -> throwIO $ ErrorCall "FLAKE_INPUTS not set!"
     Just flakeInputs -> do
       return flakeInputs
 
